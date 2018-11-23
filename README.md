@@ -1,35 +1,25 @@
 This is a package for geo services. Geocoding and distance calculations
 
-# Build
-## Run tests
-pytest tests
-
-## Run pylint
-pylint geo_garry
-
-## Run mypy
-mypy geo_garry --ignore-missing-imports
-
 # Distance service
 **geo_garry.distance.DistanceCalculatorAbstract**
 Calculates distance of 2 dimensional geopoint from certain polygon, rounding result to kilometers.
 If distance closer to edge, than 1 km, rounds to 1 km.
 There are 2 strategies of calculating, both using GoogleMaps
 
-### - Using nearest exits.
+### - Using nearest exits
 **geo_garry.distance.NearestExitsGoogleDistanceCalculator**
 For provided polygon built KDTree, search 7 nearest polygon vertexes,
 and than call google maps to find distance from 7 points.
 
-### - Using polygon center.
+### - Using polygon center
 **geo_garry.distance.PolygonCenterGoogleDistanceCalculator**
 For provided point built drivint path from polygon center, and then discard path part inside polygon.
 There are situation, when some driving step crosses polygon side. for such case we:
 
 Build line between 2 point. Using geometry difference find part of line outside polygon. Then
-calculate length of part inside
+calculate length of part inside.
 
-### - Caching.
+### - Caching
 **geo_garry.distance.CachedDistanceCalculator**
 To prevent using non-free geo services every time, we cache distance requests results.
 
@@ -66,14 +56,14 @@ For reverse geocoding there are some heuristic algorithm:
 **Reason and justification**:
 
 Fot latitude every 0,0001 delta in coordinates corresponds to 10 geo meters.
-For longitude every 0.0001 delta in coordinates corresponds to 0-10 geo meters depending on Cos(latitude), so for 60 degree latitude (approx. St Petersburg coordinate) it's 5 meters
+For longitude every 0.0001 delta in coordinates corresponds to 0-10 geo meters depending on Cos(latitude), so for 60 degree latitude (approx. St Petersburg coordinate) it's 5 meters.
 
 Cause of rounding math rules, averagely we lose only half of delta distance at worst.
 
 GPS trackers by itself provide accurasy about 5 meter, plus geocoded building often larger than accurasy at times
 
 ### - Examples
-Cache storage should implement geo_garry.cache.StorageInterface. F.e. redis.StrictRedis
+Cache storage should implement geo_garry.cache.StorageInterface. F.e. redis.StrictRedis.
 
 ```
 import googlemaps
@@ -86,3 +76,13 @@ geocoder = GoogleGeocoder(storage=cache_storage, api=client)
 geocoder.get_address(Coordinates(latitude=50.4254225, longitude=36.9020654)
 geocoder.get_coordinates('Moscow City')
 ```
+
+# Build
+## Run tests
+pytest tests
+
+## Run pylint
+pylint geo_garry
+
+## Run mypy
+mypy geo_garry --ignore-missing-imports
