@@ -12,6 +12,9 @@ class StorageInterface:
     def set(self, key, value):
         pass
 
+    def flushall(self):
+        pass
+
 
 class CacheStorageAbstract:
     expire_time = 60 * 60 * 24 * 30  # 30 days

@@ -1,6 +1,6 @@
 Shapely~=1.5
 scipy~=1.1.0
-googlemaps~=2.5
+# googlemaps~=2.5. - dependency injected
 dataclasses==0.6
 pytest>=4.0.0
 pylint>=2.1.1

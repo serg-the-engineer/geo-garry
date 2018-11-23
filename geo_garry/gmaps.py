@@ -1,7 +1,6 @@
 from typing import Tuple, List, Optional, cast, Union, Dict
 
 import logging
-import googlemaps
 
 # gmaps = googlemaps.Client(key=settings.GOOGLE_MAPS_API_KEY)  # pylint: disable=invalid-name
 
@@ -9,7 +8,7 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class GoogleMapsApi:
-    def __init__(self, gmaps_client: googlemaps.Client):
+    def __init__(self, gmaps_client):
         self.gmaps_client = gmaps_client
 
     def get_distance_from_points(
