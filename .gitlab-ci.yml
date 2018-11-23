@@ -1,0 +1,38 @@
+image: python:alpine
+
+stages:
+  - build
+  - distribute
+
+.common: &common
+  only:
+    changes:
+      - "*.py"
+      - ".gitlab-ci.yml"
+  tags:
+    - backend-docker
+
+build:
+  <<: *common
+  stage: build
+  when: always
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 3 days
+  script:
+    - python3 setup.py bdist_wheel
+
+distribute:
+  <<: *common
+  stage: distribute
+  when: on_success
+  dependencies:
+    - build
+  script: >
+    pip install twine &&
+    twine upload \
+      -u $PYPI_USER \
+      -p $PYPI_PASSWORD \
+      --repository-url https://$PYPI_HOST/$PYPI_URI/ \
+      dist/*
