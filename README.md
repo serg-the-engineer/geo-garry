@@ -45,9 +45,9 @@ service.get_distance(Coordinates(latitude=50.4254225, longitude=36.9020654))
 
 #  Geocode service
 **Geocoder**
-Base Interface class with ```get_address``` and ```get_coordinates``` methods
+Base Interface class with ```get_address```, ```get_coordinates```, ```get_federal_subject``` methods
 
-### - Caching
+### - Caching gmaps results
 To prevent using non-free geo services every time, we cache geocode requests results.
 For reverse geocoding there are some heuristic algorithm:
 - We round place coordinates for 4 decimal points, and then place address into cache by that value.
@@ -61,6 +61,9 @@ For longitude every 0.0001 delta in coordinates corresponds to 0-10 geo meters d
 Cause of rounding math rules, averagely we lose only half of delta distance at worst.
 
 GPS trackers by itself provide accurasy about 5 meter, plus geocoded building often larger than accurasy at times
+
+### Service providers
+For the most use cases GoogleGeocoder is waht you need, but there are openStreetMapsGeocoder for unhappiest failed cases, like Crimea. OpenStrretMapsGeocoder is wrapper around raw requests, and not support caching at the moment
 
 ### - Examples
 Cache storage should implement geo_garry.cache.StorageInterface. F.e. redis.StrictRedis.

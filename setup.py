@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="geo_garry",
-    version="1.0.0",
+    version="1.0.1",
     author="Sergey Retivykh",
     author_email="s.retivykh@redmadrobot.com",
     description="Geocoding and reverse geocoding, distance calculations. Google Maps implementation",
@@ -23,7 +23,6 @@ setuptools.setup(
     install_requires=[
         'Shapely~=1.5',
         'scipy~=1.1.0',
-        'googlemaps~=2.5',
         'dataclasses==0.6',
     ],
 )
