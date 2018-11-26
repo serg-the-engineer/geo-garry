@@ -3,7 +3,8 @@ from typing import Optional, Any, cast
 
 from .cache import CacheStorageAbstract, CacheableServiceAbstractMixin
 from .dataclasses import Coordinates
-from .gmaps import GoogleMapsApi, GoogleMapsAddress
+from .gmaps import GoogleMapsApi, GoogleMapsAddress, GOOGLE_MAPS_ADDRESS_SCHEMAS
+from .osm import OpenStreetMapsApi, OSM_ADDRESS_SCHEMAS
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -16,6 +17,11 @@ class Geocoder:
     def get_coordinates(self, address: str) -> Optional[Coordinates]:
         """Return coordinates for provided address string."""
         raise NotImplementedError
+
+    def get_federal_subject(self, coordinates: Coordinates) -> str:
+        """Return region address component."""
+        raise NotImplementedError
+
 
 
 class CacheStorageCoordinates(CacheStorageAbstract):
@@ -31,14 +37,20 @@ class CacheStorageCoordinates(CacheStorageAbstract):
 
 
 class CacheStorageAddress(CacheStorageAbstract):
+    prefix = 'address'
+
     def get_key(self, instance: Coordinates) -> str:
-        return f'address:{round(instance.latitude, 4)},{round(instance.longitude, 4)}'
+        return f'{self.prefix}:{round(instance.latitude, 4)},{round(instance.longitude, 4)}'
 
     def deserialize_value(self, value: bytes) -> str:
         return cast(str, value.decode())
 
     def serialize_value(self, value: Any) -> str:
         return value
+
+
+class CacheStorageFederalSubject(CacheStorageAddress):
+    prefix = 'federal'
 
 
 class GmapsCacheableGeocodeService(CacheableServiceAbstractMixin):
@@ -50,12 +62,17 @@ class GmapsCacheableGeocodeService(CacheableServiceAbstractMixin):
 
     def refresh_value(self, key: str) -> Optional[Coordinates]:
         coordinates = self.api.get_coordinates(key)
-        logger.info('Сервис GoogleMaps геокодировал адрес', address=key, coordinates=coordinates)
+        logger.info(
+            'Сервис GoogleMaps геокодировал адрес',
+            extra=dict(address=key, coordinates=coordinates)
+        )
         return Coordinates(*coordinates) if coordinates else None
 
 
 class GmapsCacheableReverseGeocodeService(CacheableServiceAbstractMixin):
     storage_class = CacheStorageAddress
+    address_schema = GOOGLE_MAPS_ADDRESS_SCHEMAS['as_desc_string']
+    log_message = 'Сервис GoogleMaps перевел координаты в адрес'
 
     def __init__(self, *, storage, api: GoogleMapsApi):
         super().__init__(storage=storage)
@@ -66,9 +83,15 @@ class GmapsCacheableReverseGeocodeService(CacheableServiceAbstractMixin):
         if not address_components:
             return None
 
-        address = GoogleMapsAddress(address_components).format()
-        logger.info('Сервис GoogleMaps перевел координаты в адрес', address=address, coordinates=key)
+        address = GoogleMapsAddress(address_components).format(self.address_schema)
+        logger.info(self.log_message, extra=dict(address=address, coordinates=key))
         return address
+
+
+class GmapsCacheableFederalSubjectService(GmapsCacheableReverseGeocodeService):
+    storage_class = CacheStorageFederalSubject
+    address_schema = GOOGLE_MAPS_ADDRESS_SCHEMAS['federal_subject']
+    log_message = 'Сервис GoogleMaps перевел координаты в субъект'
 
 
 class GoogleGeocoder(Geocoder):
@@ -85,4 +108,31 @@ class GoogleGeocoder(Geocoder):
 
         if not address:
             address = coordinates.as_str()
+        return address
+
+    def get_federal_subject(self, coordinates: Coordinates) -> str:
+        return GmapsCacheableFederalSubjectService(storage=self.storage, api=self.api).get(coordinates)
+
+
+class OpenStreetMapsGeocoder(Geocoder):
+    def get_coordinates(self, address: str):
+        raise NotImplementedError
+
+    def get_address(self, coordinates: Coordinates) -> str:
+        address = OpenStreetMapsApi().reverse(coordinates=coordinates.as_tuple())
+        logger.info(
+            'Сервис OSM перевел координаты в адрес',
+            extra=dict(address=address, coordinates=coordinates.as_tuple)
+        )
+        return address
+
+    def get_federal_subject(self, coordinates: Coordinates) -> str:
+        address = OpenStreetMapsApi().reverse(
+            coordinates=coordinates.as_tuple(),
+            address_schema=OSM_ADDRESS_SCHEMAS['federal_subject']
+        )
+        logger.info(
+            'Сервис OSM перевел координаты в субъект',
+            extra=dict(address=address, coordinates=coordinates.as_tuple)
+        )
         return address

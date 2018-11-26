@@ -1,7 +1,7 @@
 from unittest import mock
 
 from geo_garry import geocode
-from geo_garry.gmaps import GoogleMapsAddress
+from geo_garry.gmaps import GoogleMapsAddress, GOOGLE_MAPS_ADDRESS_SCHEMAS
 from geo_garry.dataclasses import Coordinates
 
 
@@ -27,8 +27,9 @@ def test_google_maps_address():
          'types': ['country', 'political']},
         {'long_name': '192019', 'short_name': '192019', 'types': ['postal_code']}
     ]
-    assert GoogleMapsAddress(terms_1).format() == \
-        'Санкт-Петербург, улица Профессора Качалова, 9а'
+    addr = GoogleMapsAddress(terms_1)
+    assert addr.format() == 'Санкт-Петербург, улица Профессора Качалова, 9а'
+    assert addr.format(GOOGLE_MAPS_ADDRESS_SCHEMAS['federal_subject']) == 'Санкт-Петербург'
 
     terms_2 = [
         {'long_name': 'владение 14',
@@ -51,8 +52,10 @@ def test_google_maps_address():
          'types': ['country', 'political']},
         {'long_name': '127543', 'short_name': '127543', 'types': ['postal_code']}
     ]
-    assert GoogleMapsAddress(terms_2).format() == \
+    addr = GoogleMapsAddress(terms_2)
+    assert addr.format() == \
         'Москва, Бибирево, МКАД 87 километр (внутр.), владение 14'
+    assert addr.format(GOOGLE_MAPS_ADDRESS_SCHEMAS['federal_subject']) == 'Москва'
 
     terms_3 = [
         {'long_name': '39',
@@ -75,8 +78,10 @@ def test_google_maps_address():
          'types': ['country', 'political']},
         {'long_name': '141021', 'short_name': '141021', 'types': ['postal_code']}
     ]
-    assert GoogleMapsAddress(terms_3).format() == \
+    addr = GoogleMapsAddress(terms_3)
+    assert addr.format() == \
         'Мытищи, Волковское шоссе, 39'
+    assert addr.format(GOOGLE_MAPS_ADDRESS_SCHEMAS['federal_subject']) == 'Московская область'
 
     terms_4 = [
         {'long_name': 'Сельхозтехника',
@@ -96,8 +101,11 @@ def test_google_maps_address():
          'types': ['country', 'political']},
         {'long_name': '141220', 'short_name': '141220', 'types': ['postal_code']}
     ]
-    assert GoogleMapsAddress(terms_4).format() == \
+    addr = GoogleMapsAddress(terms_4)
+    assert addr.format() == \
         'Челюскинский, ост. Сельхозтехника'
+    assert addr.format(GOOGLE_MAPS_ADDRESS_SCHEMAS['federal_subject']) == 'Московская область'
+
 
 
 @mock.patch('geo_garry.gmaps.GoogleMapsApi')
@@ -141,3 +149,36 @@ def test_gmaps_reverse_geocode(api_mock):
     api_mock.get_address_components.assert_called_once_with((1.22339, 4.56561))
     storage_mock.set.assert_called_once_with('address:1.2234,4.5656', addr, ex=60*60*24*30)
     storage_mock.get.assert_called_once_with('address:1.2234,4.5656')
+
+
+@mock.patch('geo_garry.gmaps.GoogleMapsApi')
+def test_gmaps_reverse_federal_geocode(api_mock):
+    storage_mock = mock.Mock(get=mock.Mock(return_value=b'address'))
+    service = geocode.GmapsCacheableFederalSubjectService(storage=storage_mock, api=api_mock)
+    assert service.get(Coordinates(1.22339, 4.56561)) == 'address'
+
+    api_mock.get_address_components.assert_not_called()
+    api_mock.get_address_components.return_value = [
+        {'long_name': '9а',
+         'short_name': '9а',
+         'types': ['street_number']},
+        {'long_name': 'улица Профессора Качалова',
+         'short_name': 'ул. Профессора Качалова',
+         'types': ['route']},
+        {'long_name': 'Санкт-Петербург',
+         'short_name': 'СПБ',
+         'types': ['locality', 'political']},
+        {'long_name': 'Санкт-Петербург',
+         'short_name': 'Санкт-Петербург',
+         'types': ['administrative_area_level_2', 'political']},
+        {'long_name': 'Россия',
+         'short_name': 'RU',
+         'types': ['country', 'political']},
+    ]
+    addr = 'Санкт-Петербург'
+    storage_mock = mock.Mock(get=mock.Mock(return_value=None))
+    service = geocode.GmapsCacheableFederalSubjectService(storage=storage_mock, api=api_mock)
+    assert service.get(Coordinates(1.22339, 4.56561)) == addr
+    api_mock.get_address_components.assert_called_once_with((1.22339, 4.56561))
+    storage_mock.set.assert_called_once_with('federal:1.2234,4.5656', addr, ex=60*60*24*30)
+    storage_mock.get.assert_called_once_with('federal:1.2234,4.5656')

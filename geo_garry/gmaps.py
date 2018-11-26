@@ -29,7 +29,7 @@ class GoogleMapsApi:
         except KeyError:
             logger.exception(
                 'Не удалось получить расстояние из переданных координат',
-                gmaps_response=distance_matrix, coordinates=destination, origins=origins
+                extra=dict(gmaps_response=distance_matrix, coordinates=destination, origins=origins),
             )
             return 0
 
@@ -44,7 +44,7 @@ class GoogleMapsApi:
         except KeyError:
             logger.exception(
                 'Не удалось получить маршрут из полученных данных',
-                gmaps_response=api_response, coordinates=destination, origin=point,
+                extra=dict(gmaps_response=api_response, coordinates=destination, origin=point),
             )
             return []
 
@@ -54,12 +54,15 @@ class GoogleMapsApi:
             language="ru",
         )
         if not api_response:
-            logger.exception('Геокодирование адреса вернуло пустой ответ', place=place)
+            logger.exception('Геокодирование адреса вернуло пустой ответ', extra={'place': place})
             return None
         try:
             coordinates = api_response[0]['geometry']['location']
         except KeyError:
-            logger.exception('Неожиданный формат ответа от gmaps', gmaps_response=api_response, place=place)
+            logger.exception(
+                'Неожиданный формат ответа от gmaps',
+                extra=dict(gmaps_response=api_response, place=place)
+            )
             return None
         return coordinates['lat'], coordinates['lng']
 
@@ -70,14 +73,17 @@ class GoogleMapsApi:
             result_type='street_address|bus_station|transit_station'
         )
         if not api_response:
-            logger.exception('Геокодирование координат вернуло пустой ответ', coordinates=coordinates)
+            logger.exception(
+                'Геокодирование координат вернуло пустой ответ',
+                extra={'coordinates': coordinates}
+            )
             return []
         try:
             return cast(List[dict], api_response[0]['address_components'])
         except KeyError:
             logger.exception(
                 'Неожиданный формат ответа от gmaps',
-                gmaps_response=api_response, coordinates=coordinates
+                extra=dict(gmaps_response=api_response, coordinates=coordinates)
             )
             return []
 
@@ -101,6 +107,14 @@ GOOGLE_MAPS_ADDRESS_SCHEMAS: Dict[str, Schema] = {
             'bus_station',
             'transit_station',
         ),
+    ],
+    'federal_subject': [
+        (
+            'administrative_area_level_1',
+            'administrative_area_level_2',
+            'administrative_area_level_3',
+            'locality',
+        ),
     ]
 }
 
@@ -117,13 +131,14 @@ class GoogleMapsAddress:
         'bus_station',
         'transit_station',
     )
+    default_schema = GOOGLE_MAPS_ADDRESS_SCHEMAS['as_desc_string']
 
     def __init__(self, address_components: List[dict]):
         self.components: dict = dict()
         for component in address_components:
             for component_type in component.get('types', []):
                 if component_type in self.TERMS:
-                    self.components[component_type] = component.get('long_name', '')
+                    self.components[component_type] = component.get('long_name', '').replace(chr(769), '')
                     continue
 
     def _handle_term(self, term) -> List[str]:
@@ -150,7 +165,7 @@ class GoogleMapsAddress:
             Use list for logical AND and tuple for logical OR.
         """
         if not terms_schema or not isinstance(terms_schema, list):
-            terms_schema = GOOGLE_MAPS_ADDRESS_SCHEMAS['as_desc_string']
+            terms_schema = self.default_schema
 
         result: List[str] = []
         for term in terms_schema:
