@@ -409,10 +409,10 @@ class MkadDistanceCalculator(CachedDistanceCalculator, NearestExitsGoogleDistanc
     expire_time = 60 * 60 * 24 * 30  # 30 days
     log_message = 'Рассчитано расстояние от МКАД (в метрах)'
 
-    def __init__(self, storage, api: GoogleMapsApi):
+    def __init__(self, storage, gmaps_client):
         super().__init__(
             storage=storage,
-            api=api,
+            api=GoogleMapsApi(gmaps_client),
             polygon=MKAD_EXITS_POLYGON,
             exits_coordinates=MKAD_EXITS_COORDINATES,
             exits_tree=MKAD_TREE,
@@ -423,5 +423,10 @@ class KadDistanceCalculator(CachedDistanceCalculator, PolygonCenterGoogleDistanc
     expire_time = 60 * 60 * 24 * 30  # 30 days
     log_message = 'Рассчитано расстояние от КАД (в метрах)'
 
-    def __init__(self, storage, api: GoogleMapsApi):
-        super().__init__(storage=storage, api=api, polygon=KAD_POLYGON, center=KAD_CENTER)
+    def __init__(self, storage, gmaps_client):
+        super().__init__(
+            storage=storage,
+            api=GoogleMapsApi(gmaps_client),
+            polygon=KAD_POLYGON,
+            center=KAD_CENTER
+        )

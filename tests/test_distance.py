@@ -173,7 +173,7 @@ def test_cacheable_calculator(calc_mock):
 @mock.patch('geo_garry.distance.NearestExitsGoogleDistanceCalculator.calc_distance')
 def test_mkad_calculator(calc_mock):
     storage_mock = mock.Mock(get=mock.Mock(return_value=12345))
-    service = distance.MkadDistanceCalculator(storage=storage_mock, api=mock.Mock())
+    service = distance.MkadDistanceCalculator(storage=storage_mock, gmaps_client=mock.Mock())
     outside_mkad = Coordinates(latitude=50.4254225, longitude=36.9020654)
     assert service.get_distance(outside_mkad) == 12
     storage_mock.get.assert_called_once_with('distance:50.4254225,36.9020654')
@@ -181,7 +181,7 @@ def test_mkad_calculator(calc_mock):
 
     calc_mock.return_value = 12345
     storage_mock = mock.Mock(get=mock.Mock(return_value=None))
-    service = distance.MkadDistanceCalculator(storage=storage_mock, api=mock.Mock())
+    service = distance.MkadDistanceCalculator(storage=storage_mock, gmaps_client=mock.Mock())
     assert service.get_distance(outside_mkad) == 12
     storage_mock.set.assert_called_once_with('distance:50.4254225,36.9020654', '12345', ex=60*60*24*30)
     calc_mock.assert_called_once_with(outside_mkad)
@@ -190,7 +190,7 @@ def test_mkad_calculator(calc_mock):
 @mock.patch('geo_garry.distance.PolygonCenterGoogleDistanceCalculator.calc_distance')
 def test_kad_calculator(calc_mock):
     storage_mock = mock.Mock(get=mock.Mock(return_value=12345))
-    service = distance.KadDistanceCalculator(storage=storage_mock, api=mock.Mock())
+    service = distance.KadDistanceCalculator(storage=storage_mock, gmaps_client=mock.Mock())
     outside_kad = Coordinates(latitude=59.991988, longitude=29.775469)
     assert service.get_distance(outside_kad) == 12
     storage_mock.get.assert_called_once_with('distance:59.991988,29.775469')
@@ -198,7 +198,7 @@ def test_kad_calculator(calc_mock):
 
     calc_mock.return_value = 12345
     storage_mock = mock.Mock(get=mock.Mock(return_value=None))
-    service = distance.KadDistanceCalculator(storage=storage_mock, api=mock.Mock())
+    service = distance.KadDistanceCalculator(storage=storage_mock, gmaps_client=mock.Mock())
     assert service.get_distance(outside_kad) == 12
     storage_mock.set.assert_called_once_with('distance:59.991988,29.775469', '12345', ex=60*60*24*30)
     calc_mock.assert_called_once_with(outside_kad)

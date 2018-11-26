@@ -104,8 +104,8 @@ class GmapsCacheableFederalSubjectService(GmapsCacheableReverseGeocodeService):
 
 class GoogleGeocoder(Geocoder):
 
-    def __init__(self, *, storage, api: GoogleMapsApi):
-        self.api = api
+    def __init__(self, *, storage, gmaps_client):
+        self.api = GoogleMapsApi(gmaps_client)
         self.storage = storage
 
     def get_coordinates(self, address: str) -> Optional[Coordinates]:
