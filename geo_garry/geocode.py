@@ -23,7 +23,6 @@ class Geocoder:
         raise NotImplementedError
 
 
-
 class CacheStorageCoordinates(CacheStorageAbstract):
     def get_key(self, instance: str) -> str:
         return f'coordinates:{instance}'
@@ -68,6 +67,9 @@ class GmapsCacheableGeocodeService(CacheableServiceAbstractMixin):
         )
         return Coordinates(*coordinates) if coordinates else None
 
+    def get_coordinates(self, address: str):
+        return self.get(address)
+
 
 class GmapsCacheableReverseGeocodeService(CacheableServiceAbstractMixin):
     storage_class = CacheStorageAddress
@@ -87,11 +89,17 @@ class GmapsCacheableReverseGeocodeService(CacheableServiceAbstractMixin):
         logger.info(self.log_message, extra=dict(address=address, coordinates=key))
         return address
 
+    def get_address(self, coordinates: Coordinates):
+        return self.get(coordinates)
+
 
 class GmapsCacheableFederalSubjectService(GmapsCacheableReverseGeocodeService):
     storage_class = CacheStorageFederalSubject
     address_schema = GOOGLE_MAPS_ADDRESS_SCHEMAS['federal_subject']
     log_message = 'Сервис GoogleMaps перевел координаты в субъект'
+
+    def get_federal_subject(self, coordinates: Coordinates):
+        return self.get(coordinates)
 
 
 class GoogleGeocoder(Geocoder):
@@ -101,17 +109,19 @@ class GoogleGeocoder(Geocoder):
         self.storage = storage
 
     def get_coordinates(self, address: str) -> Optional[Coordinates]:
-        return GmapsCacheableGeocodeService(storage=self.storage, api=self.api).get(address)
+        return GmapsCacheableGeocodeService(storage=self.storage, api=self.api).get_coordinates(address)
 
     def get_address(self, coordinates: Coordinates) -> str:
-        address = GmapsCacheableReverseGeocodeService(storage=self.storage, api=self.api).get(coordinates)
+        service = GmapsCacheableReverseGeocodeService(storage=self.storage, api=self.api)
+        address = service.get_address(coordinates)
 
         if not address:
             address = coordinates.as_str()
         return address
 
     def get_federal_subject(self, coordinates: Coordinates) -> str:
-        return GmapsCacheableFederalSubjectService(storage=self.storage, api=self.api).get(coordinates)
+        service = GmapsCacheableFederalSubjectService(storage=self.storage, api=self.api)
+        return service.get_federal_subject(coordinates)
 
 
 class OpenStreetMapsGeocoder(Geocoder):
