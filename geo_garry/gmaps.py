@@ -49,7 +49,7 @@ class GoogleMapsApi:
             return []
 
     def get_coordinates(self, place: str) -> Optional[Tuple[float, float]]:
-        api_response = self.gmaps_client.reverse_geocode(
+        api_response = self.gmaps_client.geocode(
             place,
             language="ru",
         )
