@@ -187,8 +187,8 @@ def test_gmaps_reverse_federal_geocode(api_mock):
 @mock.patch('geo_garry.gmaps.api.GoogleMapsApi')
 def test_gmaps_geocode_with_geo(api_mock):
     storage_mock = mock.Mock(get=mock.Mock(return_value=b'1,2;address'))
-    service = geocode.GmapsCacheableAddressWithGeoService(storage=storage_mock, api=api_mock)
-    assert service.get('Уруру') == CoordinatesWithCity(1, 2, 'address')
+    service = geocode.GmapsCacheableCoordinatesWithGeoService(storage=storage_mock, api=api_mock)
+    assert service.get_coordinates_with_city('Уруру') == CoordinatesWithCity(1, 2, 'address')
 
     api_mock.get_coordinates_and_address_components.assert_not_called()
     api_mock.get_coordinates_and_address_components.return_value = {
@@ -212,8 +212,8 @@ def test_gmaps_geocode_with_geo(api_mock):
         ],
     }
     storage_mock = mock.Mock(get=mock.Mock(return_value=None))
-    service = geocode.GmapsCacheableAddressWithGeoService(storage=storage_mock, api=api_mock)
-    assert service.get_address_with_city('Assa') == CoordinatesWithCity(100, 200, 'Санкт-Петербург')
+    service = geocode.GmapsCacheableCoordinatesWithGeoService(storage=storage_mock, api=api_mock)
+    assert service.get_coordinates_with_city('Assa') == CoordinatesWithCity(100, 200, 'Санкт-Петербург')
     api_mock.get_coordinates_and_address_components.assert_called_once_with('Assa')
     storage_mock.set.assert_called_once_with(
         'address_geo:Assa', '100,200;Санкт-Петербург', ex=60*60*24*30,

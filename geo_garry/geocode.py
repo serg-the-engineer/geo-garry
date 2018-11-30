@@ -8,7 +8,7 @@ from .gmaps.geocode import (
     GmapsCacheableGeocodeService,
     GmapsCacheableReverseGeocodeService,
     GmapsCacheableFederalSubjectService,
-    GmapsCacheableAddressWithGeoService,
+    GmapsCacheableCoordinatesWithGeoService,
 )
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -49,10 +49,10 @@ class GoogleGeocoder(Geocoder):
         service = GmapsCacheableFederalSubjectService(storage=self.storage, api=self.api)
         return service.get_federal_subject(coordinates)
 
-    def get_address_with_city(self, address: str):
+    def get_coordinates_with_city(self, address: str):
         """Return address coordinates and geocoded address by template."""
-        service = GmapsCacheableAddressWithGeoService(storage=self.storage, api=self.api)
-        return service.get_address_with_city(address)
+        service = GmapsCacheableCoordinatesWithGeoService(storage=self.storage, api=self.api)
+        return service.get_coordinates_with_city(address)
 
 
 class OpenStreetMapsGeocoder(Geocoder):

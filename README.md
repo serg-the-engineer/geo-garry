@@ -89,3 +89,5 @@ pylint geo_garry
 
 ## Run mypy
 mypy geo_garry --ignore-missing-imports
+
+Package automatically builds on tags

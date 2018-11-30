@@ -47,7 +47,7 @@ class CacheStorageFederalSubject(CacheStorageAddress):
     prefix = 'federal'
 
 
-class CacheStorageAddressWithGeo(CacheStorageAbstract):
+class CacheStorageCoordinatesWithGeo(CacheStorageAbstract):
     """Cache calculated coordinates and geo_address for address."""
     def get_key(self, instance: str) -> str:
         return f'address_geo:{instance}'

@@ -6,9 +6,7 @@ stages:
 
 .common: &common
   only:
-    changes:
-      - "*.py"
-      - ".gitlab-ci.yml"
+    - tags
   tags:
     - backend-docker
 
@@ -20,8 +18,10 @@ build:
     paths:
       - dist/
     expire_in: 3 days
-  script:
-    - python3 setup.py bdist_wheel
+  script: >
+    [[ $(awk -F= '/version/{gsub("^[ ]+|\"|,","");print $2}' setup.py) != $CI_COMMIT_REF_SLUG  ]] && echo Version mismatch && exit 1;
+
+    python3 setup.py bdist_wheel
 
 distribute:
   <<: *common

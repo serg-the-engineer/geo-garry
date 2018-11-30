@@ -58,8 +58,8 @@ class GmapsCacheableFederalSubjectService(GmapsCacheableReverseGeocodeService):
         return self.get(coordinates)
 
 
-class GmapsCacheableAddressWithGeoService(CacheableServiceAbstractMixin):
-    storage_class = cache.CacheStorageAddressWithGeo
+class GmapsCacheableCoordinatesWithGeoService(CacheableServiceAbstractMixin):
+    storage_class = cache.CacheStorageCoordinatesWithGeo
     address_schema = GOOGLE_MAPS_ADDRESS_SCHEMAS['city']
 
     def __init__(self, *, storage, api: GoogleMapsApi):
@@ -82,5 +82,5 @@ class GmapsCacheableAddressWithGeoService(CacheableServiceAbstractMixin):
             )
         return None
 
-    def get_address_with_city(self, address: str) -> Optional[CoordinatesWithCity]:
+    def get_coordinates_with_city(self, address: str) -> Optional[CoordinatesWithCity]:
         return self.get(address)
