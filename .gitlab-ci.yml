@@ -19,7 +19,7 @@ build:
       - dist/
     expire_in: 3 days
   script: >
-    [[ $(awk -F= '/version/{gsub("^[ ]+|\"|,","");print $2}' setup.py) != $CI_COMMIT_REF_SLUG  ]] && echo Version mismatch && exit 1;
+    [[ $(awk -F= '/version/{gsub("^[ ]+|\"|,","");print $2}' setup.py) != $CI_COMMIT_TAG  ]] && echo Version mismatch && exit 1;
 
     python3 setup.py bdist_wheel
 
