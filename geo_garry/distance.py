@@ -6,8 +6,9 @@ from shapely.geometry import Polygon
 
 from . import geometry
 from .dataclasses import Coordinates
-from .cache import CacheStorageAbstract, CacheableServiceAbstractMixin
-from .gmaps import GoogleMapsApi
+from .cache import CacheableServiceAbstractMixin
+from .gmaps.cache import CacheStorageDistance
+from .gmaps.api import GoogleMapsApi
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -381,18 +382,6 @@ class PolygonCenterGoogleDistanceCalculator(DistanceCalculatorAbstract):
             extra=dict(distance=distance, coordinates=coordinates.as_str())
         )
         return distance
-
-
-class CacheStorageDistance(CacheStorageAbstract):
-
-    def get_key(self, instance: Coordinates) -> str:
-        return f'distance:{instance.as_str()}'
-
-    def deserialize_value(self, value: bytes) -> int:
-        return int(value)
-
-    def serialize_value(self, value: int) -> str:
-        return str(value)
 
 
 class CachedDistanceCalculator(CacheableServiceAbstractMixin, DistanceCalculatorAbstract):

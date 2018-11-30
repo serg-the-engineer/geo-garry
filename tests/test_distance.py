@@ -22,7 +22,7 @@ def test_distance_calculator():
         calc_mock.assert_called_once_with(outside_mkad)
 
 
-@mock.patch('geo_garry.gmaps.GoogleMapsApi')
+@mock.patch('geo_garry.gmaps.api.GoogleMapsApi')
 def test_nearest_exits_calculator(api_mock):
     api_mock.get_distance_from_points.return_value = 5900
 
@@ -58,7 +58,7 @@ def test_nearest_exits_calculator(api_mock):
     ], (153.10, 173.10))
 
 
-@mock.patch('geo_garry.gmaps.GoogleMapsApi')
+@mock.patch('geo_garry.gmaps.api.GoogleMapsApi')
 def test_polygon_center(api_mock):
     api_mock.get_driving_path.return_value = [
         {'distance': {'text': '68 m', 'value': 68},

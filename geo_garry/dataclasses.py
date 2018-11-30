@@ -13,3 +13,11 @@ class Coordinates:
 
     def as_tuple(self) -> Tuple[float, float]:
         return self.latitude, self.longitude
+
+
+@dataclass(frozen=True)
+class CoordinatesWithCity(Coordinates):
+    city: str
+
+    def get_coordinates_as_str(self) -> str:
+        return

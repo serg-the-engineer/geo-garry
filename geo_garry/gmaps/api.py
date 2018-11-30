@@ -1,4 +1,4 @@
-from typing import Tuple, List, Optional, cast, Union, Dict
+from typing import Tuple, List, Optional, cast, Union, Dict, Any
 
 import logging
 
@@ -87,6 +87,28 @@ class GoogleMapsApi:
             )
             return []
 
+    def get_coordinates_and_address_components(self, place: str) -> Optional[Dict[str, Any]]:
+        api_response = self.gmaps_client.geocode(
+            place,
+            language="ru",
+        )
+        if not api_response:
+            logger.exception('Геокодирование адреса вернуло пустой ответ', extra={'place': place})
+            return None
+        try:
+            coordinates = api_response[0]['geometry']['location']
+            address_components = cast(List[dict], api_response[0]['address_components'])
+        except KeyError:
+            logger.exception(
+                'Неожиданный формат ответа от gmaps',
+                extra=dict(gmaps_response=api_response, place=place)
+            )
+            return None
+        return {
+            'coordinates': (coordinates['lat'], coordinates['lng']),
+            'address_components': address_components
+        }
+
 
 Schema = List[Union[List, Tuple, str]]
 GOOGLE_MAPS_ADDRESS_SCHEMAS: Dict[str, Schema] = {
@@ -115,6 +137,9 @@ GOOGLE_MAPS_ADDRESS_SCHEMAS: Dict[str, Schema] = {
             'administrative_area_level_3',
             'locality',
         ),
+    ],
+    'city': [
+        'locality',
     ]
 }
 
