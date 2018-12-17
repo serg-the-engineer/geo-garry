@@ -40,9 +40,6 @@ class GoogleGeocoder(Geocoder):
     def get_address(self, coordinates: Coordinates) -> str:
         service = GmapsCacheableReverseGeocodeService(storage=self.storage, api=self.api)
         address = service.get_address(coordinates)
-
-        if not address:
-            address = coordinates.as_str()
         return address
 
     def get_federal_subject(self, coordinates: Coordinates) -> str:
