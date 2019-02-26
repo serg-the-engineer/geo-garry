@@ -8,8 +8,8 @@ class CacheStorageDistance(CacheStorageAbstract):
     def get_key(self, instance: Coordinates) -> str:
         return f'distance:{instance.as_str()}'
 
-    def deserialize_value(self, value: bytes) -> int:
-        return int(value)
+    def deserialize_value(self, value: bytes) -> float:
+        return float(value)
 
     def serialize_value(self, value: int) -> str:
         return str(value)

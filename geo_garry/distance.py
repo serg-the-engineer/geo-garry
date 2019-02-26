@@ -322,7 +322,7 @@ class DistanceCalculatorAbstract:
         distance = round(float(distance) / 1000) if distance > 1000 else 1
         return distance
 
-    def calc_distance(self, coordinates: Coordinates) -> int:
+    def calc_distance(self, coordinates: Coordinates) -> float:
         """Caclulates distance from coordinates to polygon in meters using some strategy."""
         raise NotImplementedError
 
@@ -343,13 +343,13 @@ class NearestExitsGoogleDistanceCalculator(DistanceCalculatorAbstract):
         self.exits = exits_coordinates
         self.kdtree = exits_tree if exits_tree else KDTree(exits_coordinates)
 
-    def calc_distance(self, coordinates: Coordinates) -> int:
+    def calc_distance(self, coordinates: Coordinates) -> float:
         dists, indexes = self.kdtree.query((coordinates.latitude, coordinates.longitude), k=7)
         nearest_coordinates = list()
         for _, index in zip(dists, indexes):
             nearest_coordinates.append(self.exits[index])
 
-        distance = self.api.get_distance_from_points(nearest_coordinates, coordinates.as_tuple())
+        distance = float(self.api.get_distance_from_points(nearest_coordinates, coordinates.as_tuple()))
         logger.info(
             self.log_message,
             extra=dict(distance=distance, coordinates=coordinates.as_str())
@@ -365,7 +365,7 @@ class PolygonCenterGoogleDistanceCalculator(DistanceCalculatorAbstract):
         self.api = api
         self.center = center
 
-    def calc_distance(self, coordinates: Coordinates) -> int:
+    def calc_distance(self, coordinates: Coordinates) -> float:
         driving_path = self.api.get_driving_path(self.center.as_tuple(), coordinates.as_tuple())
         distance = 0
         for step in reversed(driving_path):
