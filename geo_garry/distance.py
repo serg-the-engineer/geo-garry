@@ -352,7 +352,7 @@ class NearestExitsGoogleDistanceCalculator(DistanceCalculatorAbstract):
         distance = float(self.api.get_distance_from_points(nearest_coordinates, coordinates.as_tuple()))
         logger.info(
             self.log_message,
-            extra=dict(distance=distance, coordinates=coordinates.as_str())
+            extra=dict(geo_distance=distance, geo_coordinates=coordinates.as_str())
         )
         return distance
 
@@ -379,7 +379,7 @@ class PolygonCenterGoogleDistanceCalculator(DistanceCalculatorAbstract):
             distance += step['distance']['value']
         logger.info(
             self.log_message,
-            extra=dict(distance=distance, coordinates=coordinates.as_str())
+            extra=dict(geo_distance=distance, geo_coordinates=coordinates.as_str())
         )
         return distance
 
