@@ -60,7 +60,7 @@ class OpenStreetMapsGeocoder(Geocoder):
         address = OpenStreetMapsApi().reverse(coordinates=coordinates.as_tuple())
         logger.info(
             'Сервис OSM перевел координаты в адрес',
-            extra=dict(address=address, coordinates=coordinates.as_tuple)
+            extra=dict(geo_address=address, geo_coordinates=coordinates.as_str)
         )
         return address
 
@@ -71,6 +71,6 @@ class OpenStreetMapsGeocoder(Geocoder):
         )
         logger.info(
             'Сервис OSM перевел координаты в субъект',
-            extra=dict(address=address, coordinates=coordinates.as_tuple)
+            extra=dict(geo_address=address, geo_coordinates=coordinates.as_str)
         )
         return address

@@ -27,9 +27,13 @@ class GoogleMapsApi:
                 [row['elements'][0]['distance']['value'] for row in distance_matrix['rows']]
             ))
         except KeyError:
-            logger.exception(
+            logger.warning(
                 'Не удалось получить расстояние из переданных координат',
-                extra=dict(gmaps_response=distance_matrix, coordinates=destination, origins=origins),
+                extra=dict(
+                    gmaps_response=distance_matrix,
+                    gmaps_coordinates=destination,
+                    gmaps_origins=origins
+                ),
             )
             return 0
 
@@ -42,9 +46,13 @@ class GoogleMapsApi:
         try:
             return cast(List[dict], api_response[0]['legs'][0]['steps'])
         except KeyError:
-            logger.exception(
+            logger.warning(
                 'Не удалось получить маршрут из полученных данных',
-                extra=dict(gmaps_response=api_response, coordinates=destination, origin=point),
+                extra=dict(
+                    gmaps_response=api_response,
+                    gmaps_coordinates=destination,
+                    gmaps_origin=point
+                ),
             )
             return []
 
@@ -54,14 +62,20 @@ class GoogleMapsApi:
             language="ru",
         )
         if not api_response:
-            logger.exception('Геокодирование адреса вернуло пустой ответ', extra={'place': place})
+            logger.warning(
+                'Геокодирование адреса вернуло пустой ответ',
+                extra=dict(gmaps_place=place)
+            )
             return None
         try:
             coordinates = api_response[0]['geometry']['location']
         except KeyError:
-            logger.exception(
+            logger.warning(
                 'Неожиданный формат ответа от gmaps',
-                extra=dict(gmaps_response=api_response, place=place)
+                extra=dict(
+                    gmaps_response=api_response,
+                    gmaps_place=place
+                )
             )
             return None
         return coordinates['lat'], coordinates['lng']
@@ -73,17 +87,20 @@ class GoogleMapsApi:
             result_type='street_address|bus_station|transit_station'
         )
         if not api_response:
-            logger.exception(
+            logger.warning(
                 'Геокодирование координат вернуло пустой ответ',
-                extra={'coordinates': coordinates}
+                extra=dict(gmaps_coordinates=coordinates)
             )
             return []
         try:
             return cast(List[dict], api_response[0]['address_components'])
         except KeyError:
-            logger.exception(
+            logger.warning(
                 'Неожиданный формат ответа от gmaps',
-                extra=dict(gmaps_response=api_response, coordinates=coordinates)
+                extra=dict(
+                    gmaps_response=api_response,
+                    gmaps_coordinates=coordinates
+                )
             )
             return []
 
@@ -93,15 +110,21 @@ class GoogleMapsApi:
             language="ru",
         )
         if not api_response:
-            logger.exception('Геокодирование адреса вернуло пустой ответ', extra={'place': place})
+            logger.warning(
+                'Геокодирование адреса вернуло пустой ответ',
+                extra=dict(gmaps_place=place)
+            )
             return None
         try:
             coordinates = api_response[0]['geometry']['location']
             address_components = cast(List[dict], api_response[0]['address_components'])
         except KeyError:
-            logger.exception(
+            logger.warning(
                 'Неожиданный формат ответа от gmaps',
-                extra=dict(gmaps_response=api_response, place=place)
+                extra=dict(
+                    gmaps_response=api_response,
+                    gmaps_place=place
+                )
             )
             return None
         return {

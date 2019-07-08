@@ -17,11 +17,16 @@ class GmapsCacheableGeocodeService(CacheableServiceAbstractMixin):
 
     def refresh_value(self, key: str) -> Optional[Coordinates]:
         coordinates = self.api.get_coordinates(key)
-        logger.info(
-            'Сервис GoogleMaps геокодировал адрес',
-            extra=dict(address=key, coordinates=coordinates)
-        )
-        return Coordinates(*coordinates) if coordinates else None
+        if coordinates:
+            coordinates = Coordinates(*coordinates)
+            logger.info(
+                'Сервис GoogleMaps геокодировал адрес',
+                extra=dict(
+                    geo_address=key,
+                    geo_coordinates=coordinates.as_str,
+                )
+            )
+        return coordinates
 
     def get_coordinates(self, address: str):
         return self.get(address)
@@ -42,7 +47,13 @@ class GmapsCacheableReverseGeocodeService(CacheableServiceAbstractMixin):
             return None
 
         address = GoogleMapsAddress(address_components).format(self.address_schema)
-        logger.info(self.log_message, extra=dict(address=address, coordinates=key))
+        logger.info(
+            self.log_message,
+            extra=dict(
+                geo_address=address,
+                geo_coordinates=key
+            )
+        )
         return address
 
     def get_address(self, coordinates: Coordinates):
@@ -71,15 +82,20 @@ class GmapsCacheableCoordinatesWithGeoService(CacheableServiceAbstractMixin):
         if result:
             coordinates = result['coordinates']
             city = GoogleMapsAddress(result['address_components']).format(self.address_schema)
-            logger.info(
-                'Сервис GoogleMaps геокодировал адрес',
-                extra=dict(address=key, coordinates=coordinates, city=city)
-            )
-            return CoordinatesWithCity(
+            coords_with_city = CoordinatesWithCity(
                 latitude=coordinates[0],
                 longitude=coordinates[1],
                 city=city,
             )
+            logger.info(
+                'Сервис GoogleMaps геокодировал адрес',
+                extra=dict(
+                    geo_address=key,
+                    geo_coordinates=coords_with_city.as_str,
+                    geo_city=city
+                )
+            )
+            return coords_with_city
         return None
 
     def get_coordinates_with_city(self, address: str) -> Optional[CoordinatesWithCity]:
