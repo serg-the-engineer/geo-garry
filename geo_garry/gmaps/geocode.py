@@ -23,7 +23,7 @@ class GmapsCacheableGeocodeService(CacheableServiceAbstractMixin):
                 'Сервис GoogleMaps геокодировал адрес',
                 extra=dict(
                     geo_address=key,
-                    geo_coordinates=coordinates.as_str,
+                    geo_coordinates=coordinates.as_str(),
                 )
             )
         return coordinates
@@ -91,7 +91,7 @@ class GmapsCacheableCoordinatesWithGeoService(CacheableServiceAbstractMixin):
                 'Сервис GoogleMaps геокодировал адрес',
                 extra=dict(
                     geo_address=key,
-                    geo_coordinates=coords_with_city.as_str,
+                    geo_coordinates=coords_with_city.as_str(),
                     geo_city=city
                 )
             )
