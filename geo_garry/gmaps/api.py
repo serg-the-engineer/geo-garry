@@ -16,6 +16,13 @@ class GoogleMapsApi:
             origins: List[Tuple[float, float]],
             destination: Tuple[float, float],
     ) -> int:
+        logger.debug(
+            'Отправлен запрос GoogleMaps.distance_matrix',
+            extra=dict(
+                gmaps_coordinates=destination,
+                gmaps_origins=origins
+            ),
+        )
         distance_matrix = self.gmaps_client.distance_matrix(
             origins=origins,
             destinations=destination,
@@ -28,7 +35,7 @@ class GoogleMapsApi:
             ))
         except KeyError:
             logger.warning(
-                'Не удалось получить расстояние из переданных координат',
+                'Не удалось получить расстояние GoogleMaps из переданных координат',
                 extra=dict(
                     gmaps_response=distance_matrix,
                     gmaps_coordinates=destination,
@@ -42,12 +49,19 @@ class GoogleMapsApi:
             point: Tuple[float, float],
             destination: Tuple[float, float],
     ) -> List[dict]:
+        logger.debug(
+            'Отправлен запрос GoogleMaps.directions',
+            extra=dict(
+                gmaps_coordinates=destination,
+                gmaps_origin=point
+            ),
+        )
         api_response = self.gmaps_client.directions(point, destination)
         try:
             return cast(List[dict], api_response[0]['legs'][0]['steps'])
         except KeyError:
             logger.warning(
-                'Не удалось получить маршрут из полученных данных',
+                'Не удалось получить маршрут GoogleMaps из полученных данных',
                 extra=dict(
                     gmaps_response=api_response,
                     gmaps_coordinates=destination,
@@ -57,13 +71,17 @@ class GoogleMapsApi:
             return []
 
     def get_coordinates(self, place: str) -> Optional[Tuple[float, float]]:
+        logger.debug(
+            'Отправлен запрос GoogleMaps.geocode',
+            extra=dict(gmaps_place=place)
+        )
         api_response = self.gmaps_client.geocode(
             place,
             language="ru",
         )
         if not api_response:
             logger.warning(
-                'Геокодирование адреса вернуло пустой ответ',
+                'Геокодирование адреса GoogleMaps вернуло пустой ответ',
                 extra=dict(gmaps_place=place)
             )
             return None
@@ -71,7 +89,7 @@ class GoogleMapsApi:
             coordinates = api_response[0]['geometry']['location']
         except KeyError:
             logger.warning(
-                'Неожиданный формат ответа от gmaps',
+                'Неожиданный формат ответа от GoogleMaps',
                 extra=dict(
                     gmaps_response=api_response,
                     gmaps_place=place
@@ -81,6 +99,10 @@ class GoogleMapsApi:
         return coordinates['lat'], coordinates['lng']
 
     def get_address_components(self, coordinates: Tuple[float, float]) -> List[dict]:
+        logger.debug(
+            'Отправлен запрос GoogleMaps.reverse_geocode',
+            extra=dict(gmaps_coordinates=coordinates)
+        )
         api_response = self.gmaps_client.reverse_geocode(
             coordinates,
             language="ru",
@@ -88,7 +110,7 @@ class GoogleMapsApi:
         )
         if not api_response:
             logger.warning(
-                'Геокодирование координат вернуло пустой ответ',
+                'Геокодирование координат GoogleMaps вернуло пустой ответ',
                 extra=dict(gmaps_coordinates=coordinates)
             )
             return []
@@ -96,7 +118,7 @@ class GoogleMapsApi:
             return cast(List[dict], api_response[0]['address_components'])
         except KeyError:
             logger.warning(
-                'Неожиданный формат ответа от gmaps',
+                'Неожиданный формат ответа от GoogleMaps',
                 extra=dict(
                     gmaps_response=api_response,
                     gmaps_coordinates=coordinates
@@ -105,13 +127,17 @@ class GoogleMapsApi:
             return []
 
     def get_coordinates_and_address_components(self, place: str) -> Optional[Dict[str, Any]]:
+        logger.debug(
+            'Отправлен запрос GoogleMaps.geocode',
+            extra=dict(gmaps_place=place)
+        )
         api_response = self.gmaps_client.geocode(
             place,
             language="ru",
         )
         if not api_response:
             logger.warning(
-                'Геокодирование адреса вернуло пустой ответ',
+                'Геокодирование адреса GoogleMaps вернуло пустой ответ',
                 extra=dict(gmaps_place=place)
             )
             return None
@@ -120,7 +146,7 @@ class GoogleMapsApi:
             address_components = cast(List[dict], api_response[0]['address_components'])
         except KeyError:
             logger.warning(
-                'Неожиданный формат ответа от gmaps',
+                'Неожиданный формат ответа от GoogleMaps',
                 extra=dict(
                     gmaps_response=api_response,
                     gmaps_place=place
