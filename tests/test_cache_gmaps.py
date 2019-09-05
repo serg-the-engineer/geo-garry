@@ -1,0 +1,90 @@
+from unittest import mock
+
+from geo_garry.cache import CacheableServiceAbstractMixin
+from geo_garry.dataclasses import Coordinates
+from geo_garry.gmaps.cache import CacheStorageCoordinates, CacheStorageAddress
+
+
+def test_cache_storage_coordinates():
+    refresh_mock = mock.Mock(name='refresh')
+    get_mock = mock.Mock(name='get')
+    set_mock = mock.Mock(name='set')
+    exists_mock = mock.Mock(name='exists')
+
+    def reset_mocks():
+        refresh_mock.reset_mock()
+        get_mock.reset_mock()
+        set_mock.reset_mock()
+
+    class TestService(CacheableServiceAbstractMixin):
+        storage_class = CacheStorageCoordinates
+
+        def refresh_value(self, key):
+            return refresh_mock(key)
+
+    service = TestService(
+        storage=mock.Mock(
+            get=get_mock,
+            set=set_mock,
+            exists=exists_mock,
+        )
+    )
+
+    get_mock.return_value = None
+    exists_mock.return_value = False
+    refresh_mock.return_value = Coordinates(1, 2)
+
+    assert service.get('address1') == Coordinates(1, 2)
+    get_mock.assert_called_once_with('coordinates:address1')
+    refresh_mock.assert_called_once_with('address1')
+    set_mock.assert_called_once_with('coordinates:address1', '1,2', ex=2592000)
+
+    reset_mocks()
+    get_mock.return_value = None
+    exists_mock.return_value = True
+    assert service.get('address1') is None
+    refresh_mock.assert_not_called()
+    set_mock.assert_not_called()
+
+    get_mock.return_value = b'1,2'
+    assert service.get('address1') == Coordinates(1, 2)
+    refresh_mock.assert_not_called()
+    set_mock.assert_not_called()
+
+
+def test_cache_storage_address():
+    refresh_mock = mock.Mock(name='refresh')
+    get_mock = mock.Mock(name='get')
+    set_mock = mock.Mock(name='set')
+
+    def reset_mocks():
+        refresh_mock.reset_mock()
+        get_mock.reset_mock()
+        set_mock.reset_mock()
+
+    class TestService(CacheableServiceAbstractMixin):
+        storage_class = CacheStorageAddress
+
+        def refresh_value(self, key):
+            return refresh_mock(key)
+
+    service = TestService(
+        storage=mock.Mock(
+            get=get_mock,
+            set=set_mock,
+        )
+    )
+
+    get_mock.return_value = None
+    refresh_mock.return_value = 'address2'
+
+    assert service.get(Coordinates(1, 2)) == 'address2'
+    get_mock.assert_called_once_with('address:1,2')
+    refresh_mock.assert_called_once_with(Coordinates(1, 2))
+    set_mock.assert_called_once_with('address:1,2', 'address2', ex=2592000)
+
+    reset_mocks()
+    get_mock.return_value = b'address2'
+    assert service.get(Coordinates(1, 2)) == 'address2'
+    refresh_mock.assert_not_called()
+    set_mock.assert_not_called()
