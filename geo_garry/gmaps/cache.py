@@ -1,5 +1,5 @@
-from typing import cast, Any
-from ..cache import CacheStorageAbstract
+from typing import cast, Any, Optional
+from ..cache import CacheStorageAbstract, CacheNullStorageAbstract
 from ..dataclasses import Coordinates, CoordinatesWithCity
 
 
@@ -15,17 +15,19 @@ class CacheStorageDistance(CacheStorageAbstract):
         return str(value)
 
 
-class CacheStorageCoordinates(CacheStorageAbstract):
+class CacheStorageCoordinates(CacheNullStorageAbstract):
     """Cache calculated coordinates for address."""
     def get_key(self, instance: str) -> str:
         return f'coordinates:{instance}'
 
-    def deserialize_value(self, value: bytes) -> Coordinates:
+    def deserialize_value(self, value: bytes) -> Optional[Coordinates]:
+        if not value:
+            return None
         lat, lng = value.decode().split(',')
         return Coordinates(float(lat), float(lng))
 
-    def serialize_value(self, value: Coordinates) -> str:
-        return value.as_str()
+    def serialize_value(self, value: Optional[Coordinates]) -> str:
+        return value.as_str() if value else ''
 
 
 class CacheStorageAddress(CacheStorageAbstract):
@@ -38,7 +40,7 @@ class CacheStorageAddress(CacheStorageAbstract):
     def deserialize_value(self, value: bytes) -> str:
         return cast(str, value.decode())
 
-    def serialize_value(self, value: Any) -> str:
+    def serialize_value(self, value: str) -> str:
         return value
 
 

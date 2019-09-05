@@ -116,7 +116,11 @@ def test_gmaps_forward_geocode(api_mock):
 
     api_mock.get_coordinates.assert_not_called()
     api_mock.get_coordinates.return_value = (1.22339, 4.56561)
-    storage_mock = mock.Mock(get=mock.Mock(return_value=None))
+    storage_mock = mock.Mock(get=mock.Mock(return_value=None), exists=mock.Mock(return_value=True))
+    service = geocode.GmapsCacheableGeocodeService(storage=storage_mock, api=api_mock)
+    assert service.get('Moscow City') is None
+
+    storage_mock = mock.Mock(get=mock.Mock(return_value=None), exists=mock.Mock(return_value=False))
     service = geocode.GmapsCacheableGeocodeService(storage=storage_mock, api=api_mock)
     assert service.get('Moscow City') == Coordinates(1.22339, 4.56561)
     api_mock.get_coordinates.assert_called_once_with('Moscow City')
