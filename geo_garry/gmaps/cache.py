@@ -49,12 +49,14 @@ class CacheStorageFederalSubject(CacheStorageAddress):
     prefix = 'federal'
 
 
-class CacheStorageCoordinatesWithGeo(CacheStorageAbstract):
+class CacheStorageCoordinatesWithGeo(CacheNullStorageAbstract):
     """Cache calculated coordinates and geo_address for address."""
     def get_key(self, instance: str) -> str:
         return f'address_geo:{instance}'
 
-    def deserialize_value(self, value: bytes) -> CoordinatesWithCity:
+    def deserialize_value(self, value: bytes) -> Optional[CoordinatesWithCity]:
+        if not value:
+            return None
         coords, geo = value.decode().split(';')
         lat, lng = coords.split(',')
         return CoordinatesWithCity(
@@ -63,5 +65,5 @@ class CacheStorageCoordinatesWithGeo(CacheStorageAbstract):
             city=geo,
         )
 
-    def serialize_value(self, value: CoordinatesWithCity) -> str:
-        return f'{value.as_str()};{value.city}'
+    def serialize_value(self, value: Optional[CoordinatesWithCity]) -> str:
+        return f'{value.as_str()};{value.city}' if value else ''
