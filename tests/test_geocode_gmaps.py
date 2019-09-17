@@ -215,8 +215,13 @@ def test_gmaps_geocode_with_geo(api_mock):
              'types': ['country', 'political']},
         ],
     }
-    storage_mock = mock.Mock(get=mock.Mock(return_value=None))
+    storage_mock = mock.Mock(get=mock.Mock(return_value=None), exists=mock.Mock(return_value=True))
     service = geocode.GmapsCacheableCoordinatesWithGeoService(storage=storage_mock, api=api_mock)
+    assert service.get_coordinates_with_city('Assa') is None
+    storage_mock.get.assert_called_once_with('address_geo:Assa')
+    storage_mock.reset_mock()
+
+    storage_mock.exists = mock.Mock(return_value=False)
     assert service.get_coordinates_with_city('Assa') == CoordinatesWithCity(100, 200, 'Санкт-Петербург')
     api_mock.get_coordinates_and_address_components.assert_called_once_with('Assa')
     storage_mock.set.assert_called_once_with(
