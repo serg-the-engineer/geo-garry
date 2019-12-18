@@ -1,10 +1,10 @@
 from unittest import mock
 
-from geo_garry import distance, Coordinates
+from geo_garry import distance, polygons, Coordinates
 
 
 def test_distance_calculator():
-    service = distance.DistanceCalculatorAbstract(polygon=distance.MKAD_EXITS_POLYGON)
+    service = distance.DistanceCalculatorAbstract(polygon=polygons.MKAD_POLYGON)
 
     with mock.patch.object(service, 'calc_distance', return_value=100500) as calc_mock:
         inside_mkad = Coordinates(latitude=55.6892209716432, longitude=37.752854389528585)
@@ -28,7 +28,7 @@ def test_nearest_exits_calculator(api_mock):
 
     service = distance.NearestExitsGoogleDistanceCalculator(
         api=api_mock,
-        polygon=distance.MKAD_EXITS_POLYGON,
+        polygon=polygons.MKAD_POLYGON,
         exits_coordinates=distance.MKAD_EXITS_COORDINATES,
         exits_tree=distance.MKAD_TREE,
     )
@@ -156,7 +156,7 @@ def test_polygon_center(api_mock):
 @mock.patch('geo_garry.distance.DistanceCalculatorAbstract.calc_distance')
 def test_cacheable_calculator(calc_mock):
     storage_mock = mock.Mock(get=mock.Mock(return_value=12345))
-    service = distance.CachedDistanceCalculator(storage=storage_mock, polygon=distance.MKAD_EXITS_POLYGON)
+    service = distance.CachedDistanceCalculator(storage=storage_mock, polygon=polygons.MKAD_POLYGON)
     outside_mkad = Coordinates(latitude=50.4254225, longitude=36.9020654)
     assert service.get_distance(outside_mkad) == 12
     storage_mock.get.assert_called_once_with('distance:50.4254225,36.9020654')
@@ -164,7 +164,7 @@ def test_cacheable_calculator(calc_mock):
 
     calc_mock.return_value = 12345
     storage_mock = mock.Mock(get=mock.Mock(return_value=None))
-    service = distance.CachedDistanceCalculator(storage=storage_mock, polygon=distance.MKAD_EXITS_POLYGON)
+    service = distance.CachedDistanceCalculator(storage=storage_mock, polygon=polygons.MKAD_POLYGON)
     assert service.get_distance(outside_mkad) == 12
     storage_mock.set.assert_called_once_with('distance:50.4254225,36.9020654', '12345', ex=60*60*24*30)
     calc_mock.assert_called_once_with(outside_mkad)

@@ -45,10 +45,10 @@ service.get_distance(Coordinates(latitude=50.4254225, longitude=36.9020654))
 
 #  Geocode service
 **Geocoder**
-Base Interface class with ```get_address```, ```get_coordinates```, ```get_federal_subject``` methods
+Base Interface class with ```get_address```, ```get_coordinates```, ```get_federal_code``` methods. Also there are ```get_geo``` method for getting data by address string. It's hard to parse city title from human typed string, google doing it better. 
 
 ### - Caching gmaps results
-To prevent using non-free geo services every time, we cache geocode requests results.
+To prevent using non-free geo services every time, we cache geocode requests results. We cache both coordinates, address, city and federal_code, it helps to save requests in future, so all three methods use same cache object. ```get_geo``` uses different key.
 For reverse geocoding there are some heuristic algorithm:
 - We round place coordinates for 4 decimal points, and then place address into cache by that value.
 - Every time then first of all we rounding coordinates, chech cache, and if empty, calculating.

@@ -122,8 +122,8 @@ def test_osm_geocoder_federal(api_mock):
     geocoder = geocode.OpenStreetMapsGeocoder()
     response = mock.Mock(json=mock.Mock(return_value=OSM_RESPONSES[2]))
     api_mock.return_value = response
-    result = geocoder.get_federal_subject(Coordinates(123, 123))
-    assert result == 'Байконур'
+    result = geocoder.get_federal_code(Coordinates(123, 123))
+    assert result == 99
     api_mock.assert_called_once_with(
         "https://nominatim.openstreetmap.org/reverse/",
         params={
