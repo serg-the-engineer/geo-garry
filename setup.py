@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="geo_garry",
-    version="1.1.1",
+    version="1.2.0",
     author="Sergey Retivykh",
     author_email="s.retivykh@redmadrobot.com",
     description="Geocoding and reverse geocoding, distance calculations. Google Maps implementation",
