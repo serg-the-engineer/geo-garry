@@ -1,4 +1,4 @@
-from typing import Tuple, List, Optional, cast, Union, Dict, Any
+from typing import Tuple, List, Optional, cast, Dict, Any
 
 import logging
 
@@ -98,7 +98,7 @@ class GoogleMapsApi:
             return None
         return coordinates['lat'], coordinates['lng']
 
-    def get_address_components(self, coordinates: Tuple[float, float]) -> List[dict]:
+    def get_addresses(self, coordinates: Tuple[float, float]) -> List:
         logger.debug(
             'Отправлен запрос GoogleMaps.reverse_geocode',
             extra=dict(gmaps_coordinates=coordinates)
@@ -114,19 +114,9 @@ class GoogleMapsApi:
                 extra=dict(gmaps_coordinates=coordinates)
             )
             return []
-        try:
-            return cast(List[dict], api_response[0]['address_components'])
-        except KeyError:
-            logger.warning(
-                'Неожиданный формат ответа от GoogleMaps',
-                extra=dict(
-                    gmaps_response=api_response,
-                    gmaps_coordinates=coordinates
-                )
-            )
-            return []
+        return api_response
 
-    def get_coordinates_and_address_components(self, place: str) -> Optional[Dict[str, Any]]:
+    def get_coordinates_and_addresses(self, place: str) -> Optional[Dict[str, Any]]:
         logger.debug(
             'Отправлен запрос GoogleMaps.geocode',
             extra=dict(gmaps_place=place)
@@ -143,7 +133,7 @@ class GoogleMapsApi:
             return None
         try:
             coordinates = api_response[0]['geometry']['location']
-            address_components = cast(List[dict], api_response[0]['address_components'])
+            addresses = api_response
         except KeyError:
             logger.warning(
                 'Неожиданный формат ответа от GoogleMaps',
@@ -155,93 +145,5 @@ class GoogleMapsApi:
             return None
         return {
             'coordinates': (coordinates['lat'], coordinates['lng']),
-            'address_components': address_components
+            'addresses': addresses
         }
-
-
-Schema = List[Union[List, Tuple, str]]
-GOOGLE_MAPS_ADDRESS_SCHEMAS: Dict[str, Schema] = {
-    'as_desc_string': [  # Returns address build from most specific to least specific
-        (
-            'locality',
-            [
-                'administrative_area_level_1',
-                'administrative_area_level_2',
-                'administrative_area_level_3',
-            ],
-        ),
-        (
-            [
-                'route',
-                'street_number',
-            ],
-            'bus_station',
-            'transit_station',
-        ),
-    ],
-    'federal_subject': [
-        (
-            'administrative_area_level_1',
-            'administrative_area_level_2',
-            'administrative_area_level_3',
-            'locality',
-        ),
-    ],
-    'city': [
-        'locality',
-    ]
-}
-
-
-class GoogleMapsAddress:
-    TERMS = (
-        'country',
-        'locality',                     # город
-        'administrative_area_level_1',  # обычно область
-        'administrative_area_level_2',  # обычно район или город
-        'administrative_area_level_3',
-        'route',
-        'street_number',
-        'bus_station',
-        'transit_station',
-    )
-    default_schema = GOOGLE_MAPS_ADDRESS_SCHEMAS['as_desc_string']
-
-    def __init__(self, address_components: List[dict]):
-        self.components: dict = dict()
-        for component in address_components:
-            for component_type in component.get('types', []):
-                if component_type in self.TERMS:
-                    self.components[component_type] = component.get('long_name', '').replace(chr(769), '')
-                    continue
-
-    def _handle_term(self, term) -> List[str]:
-        if isinstance(term, str) and term in self.components:
-            if term in ['bus_station', 'transit_station']:
-                return ['ост. ' + self.components[term]]
-            return [self.components[term]]
-        if isinstance(term, list):
-            subresult: List[str] = []
-            for subterm in term:
-                subresult += self._handle_term(subterm)
-            return subresult
-        if isinstance(term, tuple):
-            for subterm in term:
-                subresult = self._handle_term(subterm)
-                if subresult:
-                    return subresult
-        return []
-
-    def format(self, terms_schema: Schema = None) -> str:
-        """
-            Build string defined in terms_schema.
-            If term not present it skipped. If term type differs from List, Tuple, Str it skipped
-            Use list for logical AND and tuple for logical OR.
-        """
-        if not terms_schema or not isinstance(terms_schema, list):
-            terms_schema = self.default_schema
-
-        result: List[str] = []
-        for term in terms_schema:
-            result += self._handle_term(term)
-        return ', '.join(result)

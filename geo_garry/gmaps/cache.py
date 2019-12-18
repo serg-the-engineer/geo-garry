@@ -1,6 +1,6 @@
-from typing import cast, Any, Optional
+from typing import Optional
 from ..cache import CacheStorageAbstract, CacheNullStorageAbstract
-from ..dataclasses import Coordinates, CoordinatesWithCity
+from ..dataclasses import Coordinates, CoordinatesAddress
 
 
 class CacheStorageDistance(CacheStorageAbstract):
@@ -16,7 +16,7 @@ class CacheStorageDistance(CacheStorageAbstract):
 
 
 class CacheStorageCoordinates(CacheNullStorageAbstract):
-    """Cache calculated coordinates for address."""
+    """Stores calculated coordinates for address."""
     def get_key(self, instance: str) -> str:
         return f'coordinates:{instance}'
 
@@ -30,40 +30,34 @@ class CacheStorageCoordinates(CacheNullStorageAbstract):
         return value.as_str() if value else ''
 
 
-class CacheStorageAddress(CacheStorageAbstract):
-    """Cache calculated address for coordinates."""
-    prefix = 'address'
+class CacheStorageAddress(CacheNullStorageAbstract):
+    """Stores calculated address, city, federal_code for coordinates."""
+    prefix = 'geo'
 
     def get_key(self, instance: Coordinates) -> str:
         return f'{self.prefix}:{round(instance.latitude, 4)},{round(instance.longitude, 4)}'
 
-    def deserialize_value(self, value: bytes) -> str:
-        return cast(str, value.decode())
-
-    def serialize_value(self, value: str) -> str:
-        return value
-
-
-class CacheStorageFederalSubject(CacheStorageAddress):
-    """Cache calculated federal subject for coordinates."""
-    prefix = 'federal'
-
-
-class CacheStorageCoordinatesWithGeo(CacheNullStorageAbstract):
-    """Cache calculated coordinates and geo_address for address."""
-    def get_key(self, instance: str) -> str:
-        return f'address_geo:{instance}'
-
-    def deserialize_value(self, value: bytes) -> Optional[CoordinatesWithCity]:
+    def deserialize_value(self, value: bytes) -> Optional[CoordinatesAddress]:
         if not value:
             return None
-        coords, geo = value.decode().split(';')
+        coords, address, city, federal_code = value.decode().split(';')
         lat, lng = coords.split(',')
-        return CoordinatesWithCity(
+        return CoordinatesAddress(
             latitude=float(lat),
             longitude=float(lng),
-            city=geo,
+            address=address,
+            city=city or None,
+            federal_code=int(federal_code) if federal_code else None,
         )
 
-    def serialize_value(self, value: Optional[CoordinatesWithCity]) -> str:
-        return f'{value.as_str()};{value.city}' if value else ''
+    def serialize_value(self, value: CoordinatesAddress) -> str:
+        return value.as_str() if value else ''
+
+
+class CacheStorageAllByAddress(CacheStorageAddress):
+    """
+        CaStores calculated coordinates and geo_address for address.
+        It's hard to find city from human typed address string.
+    """
+    def get_key(self, instance: str) -> str:
+        return f'geo_by_address:{instance}'

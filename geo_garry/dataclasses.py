@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Optional
 
 from dataclasses import dataclass
 
@@ -16,8 +16,15 @@ class Coordinates:
 
 
 @dataclass(frozen=True)
-class CoordinatesWithCity(Coordinates):
-    city: str
+class CoordinatesAddress(Coordinates):
+    address: str
+    city: Optional[str] = None
+    federal_code: Optional[int] = None
 
-    def get_coordinates_as_str(self) -> str:
-        return
+    def as_str(self) -> str:
+        return "{},{};{};{};{}".format(
+            self.latitude, self.longitude,
+            self.address,
+            self.city or '',
+            self.federal_code or '',
+        )

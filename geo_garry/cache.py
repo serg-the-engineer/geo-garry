@@ -1,4 +1,7 @@
 from typing import Any, Optional, Type
+import logging
+
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class CacheStorageNotFound(Exception):
@@ -59,7 +62,7 @@ class CacheNullStorageAbstract(CacheStorageAbstract):  # pylint: disable=abstrac
         return self.deserialize_value(value)
 
 
-class CacheableServiceAbstractMixin:
+class CacheableServiceAbstract:
     def __init__(self, **kwargs):
         self.cache_storage: StorageInterface = kwargs.pop('storage')
         if not self.cache_storage:
@@ -73,13 +76,16 @@ class CacheableServiceAbstractMixin:
 
     def get(self, key: Any) -> Any:
         storage = self.storage_class(self.cache_storage)
-
         try:
             cached_value = storage.get(key)
         except CacheValueNotFound:
             pass
         else:
             if cached_value or (not cached_value and storage.allow_empty):
+                logger.info(
+                    'Получено значение из кеша',
+                    extra=dict(cache_key=key, cache_value=cached_value)
+                )
                 return cached_value
 
         refreshed_value = self.refresh_value(key)
