@@ -1,4 +1,4 @@
-from typing import Tuple, List, Optional, cast, Dict, Any
+from typing import Tuple, List, Optional, cast, Dict, Generator, Union
 
 import logging
 
@@ -98,7 +98,7 @@ class GoogleMapsApi:
             return None
         return coordinates['lat'], coordinates['lng']
 
-    def get_addresses(self, coordinates: Tuple[float, float]) -> List:
+    def get_addresses(self, coordinates: Tuple[float, float]) -> Optional[Generator[List, None, None]]:
         logger.debug(
             'Отправлен запрос GoogleMaps.reverse_geocode',
             extra=dict(gmaps_coordinates=coordinates)
@@ -114,9 +114,11 @@ class GoogleMapsApi:
                 extra=dict(gmaps_coordinates=coordinates)
             )
             return []
-        return api_response
+        return (
+            address['address_components'] for address in api_response
+        )
 
-    def get_coordinates_and_addresses(self, place: str) -> Optional[Dict[str, Any]]:
+    def get_coordinates_and_addresses(self, place: str) -> Optional[Dict[str, Union[Tuple[int], Generator]]]:
         logger.debug(
             'Отправлен запрос GoogleMaps.geocode',
             extra=dict(gmaps_place=place)
@@ -133,7 +135,9 @@ class GoogleMapsApi:
             return None
         try:
             coordinates = api_response[0]['geometry']['location']
-            addresses = api_response
+            addresses = (
+                address['address_components'] for address in api_response
+            )
         except KeyError:
             logger.warning(
                 'Неожиданный формат ответа от GoogleMaps',
